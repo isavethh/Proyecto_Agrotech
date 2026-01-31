@@ -62,6 +62,26 @@ services:
     restart: unless-stopped
 
   # ============================================
+  # IOT SIMULATOR (Python)
+  # ============================================
+  iot-simulator:
+    build:
+      context: ./iot-simulator
+      dockerfile: Dockerfile
+    container_name: agrobolivia-iot
+    environment:
+      API_URL: http://backend:3000/api/v1
+      IOT_API_KEY: ${IOT_API_KEY:-iot-secret-key-2024}
+      INTERVAL_SECONDS: 60
+    depends_on:
+      - backend
+    networks:
+      - agrobolivia-network
+    restart: unless-stopped
+    profiles:
+      - iot
+
+  # ============================================
   # ADMINER (Gestor de BD - Solo desarrollo)
   # ============================================
   adminer:
