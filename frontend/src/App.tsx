@@ -5,12 +5,14 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import Parcelas from './pages/Parcelas';
+import ParcelaDetalle from './pages/ParcelaDetalle';
 import Finanzas from './pages/Finanzas';
 import Inventario from './pages/Inventario';
 import IoT from './pages/IoT';
 import Alertas from './pages/Alertas';
 import Security from './pages/Security';
 import Perfil from './pages/Perfil';
+import Recomendaciones from './pages/Recomendaciones';
 
 // Componente para rutas protegidas
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -65,10 +67,12 @@ function App() {
       >
         <Route index element={<Dashboard />} />
         <Route path="parcelas" element={<Parcelas />} />
+        <Route path="parcelas/:id" element={<ParcelaDetalle />} />
         <Route path="finanzas" element={<Finanzas />} />
         <Route path="inventario" element={<Inventario />} />
         <Route path="iot" element={<IoT />} />
         <Route path="alertas" element={<Alertas />} />
+        <Route path="recomendaciones" element={<Recomendaciones />} />
         <Route path="seguridad" element={<Security />} />
         <Route path="perfil" element={<Perfil />} />
       </Route>

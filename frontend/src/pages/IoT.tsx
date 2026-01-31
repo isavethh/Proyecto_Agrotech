@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -8,18 +8,22 @@ import {
   Title,
   Tooltip,
   Legend,
+  Filler,
 } from 'chart.js';
 import { Line } from 'react-chartjs-2';
 import api from '../services/api';
+import toast from 'react-hot-toast';
 import {
   SignalIcon,
   CloudIcon,
   SunIcon,
   BeakerIcon,
   ArrowPathIcon,
+  PlayIcon,
+  PauseIcon,
 } from '@heroicons/react/24/outline';
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);
 
 interface Sensor {
   id: string;
@@ -44,10 +48,58 @@ export default function IoT() {
   const [loading, setLoading] = useState(true);
   const [selectedSensor, setSelectedSensor] = useState<string | null>(null);
   const [historico, setHistorico] = useState<LecturaHistorica[]>([]);
+  const [simulando, setSimulando] = useState(false);
+  const [ultimaActualizacion, setUltimaActualizacion] = useState(new Date());
+
+  // Simulación de datos en tiempo real
+  const simularLectura = useCallback(() => {
+    setSensores(prev => prev.map(sensor => {
+      if (!sensor.activo) return sensor;
+      
+      let nuevoValor = sensor.ultimaLectura?.valor || 50;
+      const variacion = (Math.random() - 0.5) * 5;
+      
+      switch (sensor.tipo) {
+        case 'HUMEDAD_SUELO':
+          nuevoValor = Math.max(20, Math.min(90, nuevoValor + variacion));
+          break;
+        case 'TEMPERATURA':
+          nuevoValor = Math.max(5, Math.min(35, nuevoValor + variacion * 0.5));
+          break;
+        case 'PH_SUELO':
+          nuevoValor = Math.max(4, Math.min(9, nuevoValor + variacion * 0.1));
+          break;
+        case 'LLUVIA':
+          nuevoValor = Math.max(0, nuevoValor + (Math.random() > 0.8 ? Math.random() * 2 : 0));
+          break;
+      }
+
+      return {
+        ...sensor,
+        ultimaLectura: {
+          ...sensor.ultimaLectura!,
+          valor: Math.round(nuevoValor * 10) / 10,
+          timestamp: new Date().toISOString(),
+        }
+      };
+    }));
+    setUltimaActualizacion(new Date());
+  }, []);
 
   useEffect(() => {
     loadSensores();
   }, []);
+
+  useEffect(() => {
+    let interval: ReturnType<typeof setInterval>;
+    if (simulando) {
+      interval = setInterval(simularLectura, 2000);
+      toast.success('📡 Simulación IoT iniciada');
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [simulando, simularLectura]);
 
   useEffect(() => {
     if (selectedSensor) {
@@ -202,11 +254,52 @@ export default function IoT() {
           <h1 className="text-2xl font-bold text-gray-900">Sensores IoT</h1>
           <p className="text-gray-500">Monitoreo en tiempo real de tus parcelas</p>
         </div>
-        <button onClick={loadSensores} className="btn-secondary flex items-center gap-2">
-          <ArrowPathIcon className="w-5 h-5" />
-          Actualizar
-        </button>
+        <div className="flex gap-2">
+          <button 
+            onClick={() => setSimulando(!simulando)} 
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all ${
+              simulando 
+                ? 'bg-red-100 text-red-700 hover:bg-red-200' 
+                : 'bg-green-100 text-green-700 hover:bg-green-200'
+            }`}
+          >
+            {simulando ? (
+              <>
+                <PauseIcon className="w-5 h-5" />
+                Detener Simulación
+              </>
+            ) : (
+              <>
+                <PlayIcon className="w-5 h-5" />
+                Simular Datos
+              </>
+            )}
+          </button>
+          <button onClick={loadSensores} className="btn-secondary flex items-center gap-2">
+            <ArrowPathIcon className="w-5 h-5" />
+            Actualizar
+          </button>
+        </div>
       </div>
+
+      {/* Simulación Banner */}
+      {simulando && (
+        <div className="bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-xl p-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <SignalIcon className="w-8 h-8" />
+              <span className="absolute -top-1 -right-1 w-3 h-3 bg-white rounded-full animate-ping"></span>
+            </div>
+            <div>
+              <p className="font-semibold">Simulación IoT Activa</p>
+              <p className="text-sm opacity-90">Los datos se actualizan cada 2 segundos</p>
+            </div>
+          </div>
+          <p className="text-sm">
+            Última actualización: {ultimaActualizacion.toLocaleTimeString('es-BO')}
+          </p>
+        </div>
+      )}
 
       {/* Status Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -228,8 +321,10 @@ export default function IoT() {
         </div>
         <div className="card text-center">
           <div className="flex items-center justify-center gap-1">
-            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-            <p className="text-sm font-medium text-green-600">En línea</p>
+            <div className={`w-2 h-2 rounded-full ${simulando ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`}></div>
+            <p className={`text-sm font-medium ${simulando ? 'text-green-600' : 'text-gray-500'}`}>
+              {simulando ? 'Simulando' : 'En espera'}
+            </p>
           </div>
           <p className="text-sm text-gray-500">Estado del sistema</p>
         </div>

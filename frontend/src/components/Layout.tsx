@@ -14,6 +14,7 @@ import {
   XMarkIcon,
   ArrowRightOnRectangleIcon,
   ChevronDownIcon,
+  SparklesIcon,
 } from '@heroicons/react/24/outline';
 
 const navigation = [
@@ -23,6 +24,7 @@ const navigation = [
   { name: 'Inventario', href: '/inventario', icon: CubeIcon },
   { name: 'IoT Sensores', href: '/iot', icon: SignalIcon },
   { name: 'Alertas', href: '/alertas', icon: BellIcon },
+  { name: 'IA Recomendaciones', href: '/recomendaciones', icon: SparklesIcon },
   { name: 'Seguridad', href: '/seguridad', icon: ShieldCheckIcon },
 ];
 

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../services/api';
 import toast from 'react-hot-toast';
 import {
@@ -273,10 +274,13 @@ export default function Parcelas() {
               </div>
             )}
 
-            <button className="w-full mt-4 btn-secondary flex items-center justify-center gap-2">
+            <Link 
+              to={`/parcelas/${parcela.id}`}
+              className="w-full mt-4 btn-secondary flex items-center justify-center gap-2"
+            >
               <EyeIcon className="w-4 h-4" />
               Ver Detalles
-            </button>
+            </Link>
           </div>
         ))}
       </div>
