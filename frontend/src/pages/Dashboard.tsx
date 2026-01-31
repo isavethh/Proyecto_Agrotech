@@ -39,23 +39,41 @@ ChartJS.register(
 );
 
 interface DashboardData {
-  resumen: {
-    totalParcelas: number;
-    areaTotal: number;
-    cultivosActivos: number;
-    sensoresActivos: number;
-    alertasPendientes: number;
-    balanceFinanciero: number;
-    ingresosMes: number;
-    gastosMes: number;
-  };
-  finanzas: {
-    ingresos: { mes: string; total: number }[];
-    gastos: { mes: string; total: number }[];
-  };
-  cultivos: {
+  usuario: {
     nombre: string;
-    cantidad: number;
+    ultimoLogin: string | null;
+  };
+  resumen: {
+    parcelas: {
+      total: number;
+      areaTotal: string;
+    };
+    cultivos: {
+      activos: number;
+      proximosCosecha: number;
+    };
+    alertas: {
+      total: number;
+      criticas: number;
+    };
+    inventario: {
+      stockBajo: number;
+    };
+  };
+  finanzasMes: {
+    ingresos: number;
+    gastos: number;
+    utilidad: number;
+    margen: number | string;
+  };
+  cultivosActivos: {
+    id: string;
+    nombre: string;
+    variedad: string;
+    parcela: string;
+    estado: string;
+    fechaCosecha: string | null;
+    diasParaCosecha: number | null;
   }[];
   alertasRecientes: {
     id: string;
@@ -64,10 +82,19 @@ interface DashboardData {
     prioridad: string;
     createdAt: string;
   }[];
-  sensores: {
-    tipo: string;
-    ultimaLectura: number;
+  tareasPendientes: {
+    id: string;
+    titulo: string;
+    prioridad: string;
+    fechaLimite: string | null;
+    vencida: boolean;
+  }[];
+  stockBajo: {
+    id: string;
+    nombre: string;
+    cantidad: number;
     unidad: string;
+    stockMinimo: number;
   }[];
 }
 
@@ -98,17 +125,14 @@ export default function Dashboard() {
     );
   }
 
-  // Si no hay datos, mostrar datos de ejemplo
-  const resumen = data?.resumen || {
-    totalParcelas: 2,
-    areaTotal: 1.5,
-    cultivosActivos: 3,
-    sensoresActivos: 4,
-    alertasPendientes: 2,
-    balanceFinanciero: 8500,
-    ingresosMes: 3200,
-    gastosMes: 1800,
-  };
+  // Extraer datos del backend con valores por defecto
+  const totalParcelas = data?.resumen?.parcelas?.total ?? 0;
+  const areaTotal = data?.resumen?.parcelas?.areaTotal ?? '0';
+  const cultivosActivos = data?.resumen?.cultivos?.activos ?? 0;
+  const alertasPendientes = data?.resumen?.alertas?.total ?? 0;
+  const ingresosMes = data?.finanzasMes?.ingresos ?? 0;
+  const gastosMes = data?.finanzasMes?.gastos ?? 0;
+  const balanceMes = ingresosMes - gastosMes;
 
   const finanzasData = {
     labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
@@ -158,34 +182,34 @@ export default function Dashboard() {
   const stats = [
     {
       name: 'Parcelas',
-      value: resumen.totalParcelas,
-      subvalue: `${resumen.areaTotal} ha total`,
+      value: totalParcelas,
+      subvalue: `${areaTotal} ha total`,
       icon: MapIcon,
       color: 'bg-blue-500',
       link: '/parcelas',
     },
     {
       name: 'Balance del Mes',
-      value: `Bs. ${(resumen.ingresosMes - resumen.gastosMes).toLocaleString()}`,
-      subvalue: resumen.ingresosMes > resumen.gastosMes ? 'Ganancia' : 'Pérdida',
-      icon: resumen.ingresosMes > resumen.gastosMes ? ArrowTrendingUpIcon : ArrowTrendingDownIcon,
-      color: resumen.ingresosMes > resumen.gastosMes ? 'bg-green-500' : 'bg-red-500',
+      value: `Bs. ${balanceMes.toLocaleString()}`,
+      subvalue: balanceMes >= 0 ? 'Ganancia' : 'Pérdida',
+      icon: balanceMes >= 0 ? ArrowTrendingUpIcon : ArrowTrendingDownIcon,
+      color: balanceMes >= 0 ? 'bg-green-500' : 'bg-red-500',
       link: '/finanzas',
     },
     {
-      name: 'Sensores IoT',
-      value: resumen.sensoresActivos,
-      subvalue: 'Activos',
+      name: 'Cultivos Activos',
+      value: cultivosActivos,
+      subvalue: 'En producción',
       icon: SignalIcon,
       color: 'bg-purple-500',
-      link: '/iot',
+      link: '/parcelas',
     },
     {
       name: 'Alertas',
-      value: resumen.alertasPendientes,
+      value: alertasPendientes,
       subvalue: 'Pendientes',
       icon: ExclamationTriangleIcon,
-      color: resumen.alertasPendientes > 0 ? 'bg-orange-500' : 'bg-gray-400',
+      color: alertasPendientes > 0 ? 'bg-orange-500' : 'bg-gray-400',
       link: '/alertas',
     },
   ];

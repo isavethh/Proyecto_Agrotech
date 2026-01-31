@@ -216,18 +216,24 @@ function sanitizeObject(obj: Record<string, unknown>): Record<string, unknown> {
 // DETECCIÓN DE ACTIVIDAD SOSPECHOSA
 // ============================================
 const suspiciousPatterns = [
-  /(\%27)|(\')|(\-\-)|(\%23)|(#)/i, // SQL Injection
   /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, // XSS
   /(\.\.\/)|(\.\.\\)/g, // Path Traversal
-  /(union\s+select|select\s+\*|drop\s+table|insert\s+into)/gi, // SQL
-  /(<|>|"|'|&|;|\||`|\$|\(|\)|{|}|\[|\])/g, // Caracteres peligrosos en exceso
+  /(union\s+select|select\s+\*|drop\s+table|insert\s+into)/gi, // SQL Keywords
 ];
+
+// Rutas excluidas de detección agresiva (auth necesita caracteres especiales en passwords)
+const excludedPaths = ['/api/v1/auth/login', '/api/v1/auth/register', '/api/v1/auth/change-password'];
 
 export const detectSuspiciousActivity = (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
+  // Excluir rutas de autenticación (passwords tienen caracteres especiales)
+  if (excludedPaths.some(path => req.path.includes(path))) {
+    return next();
+  }
+
   const dataToCheck = JSON.stringify({
     body: req.body,
     query: req.query,
@@ -244,7 +250,7 @@ export const detectSuspiciousActivity = (
   }
   
   // Si hay demasiados patrones sospechosos, bloquear
-  if (suspiciousCount > 10) {
+  if (suspiciousCount > 5) {
     logSecurity(AUDIT_EVENTS.SUSPICIOUS_ACTIVITY, {
       ip: req.ip,
       path: req.path,
