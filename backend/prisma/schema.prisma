@@ -1,0 +1,568 @@
+// ============================================
+// AGROBOLIVIA - ESQUEMA DE BASE DE DATOS
+// PostgreSQL con Prisma ORM
+// ============================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// USUARIOS Y AUTENTICACIÓN
+// ============================================
+
+model User {
+  id                  String    @id @default(uuid())
+  email               String    @unique
+  passwordHash        String
+  nombre              String
+  apellido            String
+  telefono            String?
+  telefonoEncriptado  String?   // Teléfono encriptado con AES-256
+  departamento        String?
+  comunidad           String?
+  role                Role      @default(AGRICULTOR)
+  activo              Boolean   @default(true)
+  emailVerificado     Boolean   @default(false)
+  
+  // 2FA
+  twoFactorEnabled    Boolean   @default(false)
+  twoFactorSecret     String?   // Encriptado
+  
+  // Seguridad
+  intentosFallidos    Int       @default(0)
+  bloqueadoHasta      DateTime?
+  ultimoLogin         DateTime?
+  
+  // Timestamps
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  
+  // Relaciones
+  parcelas            Parcela[]
+  transacciones       Transaccion[]
+  ventas              Venta[]
+  alertas             Alerta[]
+  trabajadores        Trabajador[]
+  sesiones            Session[]
+  auditLogs           AuditLog[]
+  
+  @@index([email])
+  @@index([role])
+}
+
+model Session {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token       String   @unique
+  refreshToken String  @unique
+  ipAddress   String?
+  userAgent   String?
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+  
+  @@index([userId])
+  @@index([token])
+}
+
+enum Role {
+  ADMIN
+  AGRICULTOR
+  TECNICO
+  VIEWER
+}
+
+// ============================================
+// PARCELAS Y TERRENOS
+// ============================================
+
+model Parcela {
+  id                String    @id @default(uuid())
+  userId            String
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  nombre            String
+  ubicacion         String?
+  tamanioHectareas  Float
+  tipoSuelo         String?
+  
+  // Coordenadas GPS
+  latitud           Float?
+  longitud          Float?
+  altitudMsnm       Float?
+  
+  activa            Boolean   @default(true)
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  // Relaciones
+  cultivos          Cultivo[]
+  sensores          Sensor[]
+  alertas           Alerta[]
+  jornadas          Jornada[]
+  
+  @@index([userId])
+}
+
+// ============================================
+// CULTIVOS
+// ============================================
+
+model Cultivo {
+  id                    String        @id @default(uuid())
+  parcelaId             String
+  parcela               Parcela       @relation(fields: [parcelaId], references: [id], onDelete: Cascade)
+  
+  nombre                String
+  variedad              String?
+  fechaSiembra          DateTime
+  fechaCosechaEstimada  DateTime?
+  fechaCosechaReal      DateTime?
+  areaCultivada         Float         // En hectáreas
+  
+  // Rendimiento
+  rendimientoEsperado   Float?        // En kg o quintales
+  rendimientoReal       Float?
+  
+  estado                CropStatus    @default(SEMBRADO)
+  notas                 String?
+  
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+  
+  // Relaciones
+  transacciones         Transaccion[]
+  alertas               Alerta[]
+  produccion            Inventario[]
+  
+  @@index([parcelaId])
+  @@index([estado])
+}
+
+enum CropStatus {
+  PLANIFICADO
+  SEMBRADO
+  EN_CRECIMIENTO
+  FLORECIENDO
+  MADURANDO
+  LISTO_COSECHA
+  COSECHADO
+  PERDIDO
+}
+
+// ============================================
+// INVENTARIO
+// ============================================
+
+model Inventario {
+  id                String          @id @default(uuid())
+  userId            String
+  cultivoId         String?
+  cultivo           Cultivo?        @relation(fields: [cultivoId], references: [id])
+  
+  nombre            String
+  tipo              InventoryType
+  cantidad          Float
+  unidad            String
+  precioUnitario    Float?
+  stockMinimo       Float?
+  
+  fechaVencimiento  DateTime?
+  lote              String?
+  ubicacion         String?
+  
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  
+  // Relaciones
+  movimientos       MovimientoInventario[]
+  ventas            Venta[]
+  
+  @@index([userId])
+  @@index([tipo])
+}
+
+model MovimientoInventario {
+  id            String          @id @default(uuid())
+  inventarioId  String
+  inventario    Inventario      @relation(fields: [inventarioId], references: [id], onDelete: Cascade)
+  
+  tipo          MovementType
+  cantidad      Float
+  motivo        String?
+  referencia    String?         // ID de venta, compra, etc.
+  
+  createdAt     DateTime        @default(now())
+  
+  @@index([inventarioId])
+}
+
+enum InventoryType {
+  INSUMO
+  PRODUCCION
+  HERRAMIENTA
+}
+
+enum MovementType {
+  ENTRADA
+  SALIDA
+  AJUSTE
+}
+
+// ============================================
+// FINANZAS
+// ============================================
+
+model Transaccion {
+  id            String            @id @default(uuid())
+  userId        String
+  user          User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cultivoId     String?
+  cultivo       Cultivo?          @relation(fields: [cultivoId], references: [id])
+  
+  tipo          TransactionType
+  categoria     String
+  monto         Float
+  fecha         DateTime
+  descripcion   String?
+  comprobante   String?
+  
+  // Datos encriptados (para montos grandes)
+  montoEncriptado String?
+  
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  
+  @@index([userId])
+  @@index([tipo])
+  @@index([fecha])
+  @@index([categoria])
+}
+
+enum TransactionType {
+  INGRESO
+  GASTO
+}
+
+// ============================================
+// VENTAS Y CLIENTES
+// ============================================
+
+model Cliente {
+  id          String    @id @default(uuid())
+  userId      String
+  
+  nombre      String
+  telefono    String?
+  direccion   String?
+  tipo        ClientType @default(REGULAR)
+  notas       String?
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  // Relaciones
+  ventas      Venta[]
+  
+  @@index([userId])
+}
+
+model Venta {
+  id              String      @id @default(uuid())
+  userId          String
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  inventarioId    String
+  inventario      Inventario  @relation(fields: [inventarioId], references: [id])
+  clienteId       String?
+  cliente         Cliente?    @relation(fields: [clienteId], references: [id])
+  
+  cantidad        Float
+  precioUnitario  Float
+  total           Float
+  fecha           DateTime
+  lugarVenta      String?
+  notas           String?
+  
+  createdAt       DateTime    @default(now())
+  
+  @@index([userId])
+  @@index([fecha])
+}
+
+enum ClientType {
+  REGULAR
+  MAYORISTA
+  FERIA
+  RESTAURANTE
+  COOPERATIVA
+}
+
+// ============================================
+// TRABAJADORES Y JORNADAS
+// ============================================
+
+model Trabajador {
+  id            String    @id @default(uuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  nombre        String
+  telefono      String?
+  especialidad  String?
+  tarifaDiaria  Float
+  activo        Boolean   @default(true)
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  // Relaciones
+  jornadas      Jornada[]
+  
+  @@index([userId])
+}
+
+model Jornada {
+  id              String      @id @default(uuid())
+  trabajadorId    String
+  trabajador      Trabajador  @relation(fields: [trabajadorId], references: [id], onDelete: Cascade)
+  parcelaId       String?
+  parcela         Parcela?    @relation(fields: [parcelaId], references: [id])
+  
+  fecha           DateTime
+  horasTrabajadas Float
+  actividad       String
+  montoAPagar     Float
+  pagado          Boolean     @default(false)
+  fechaPago       DateTime?
+  
+  createdAt       DateTime    @default(now())
+  
+  @@index([trabajadorId])
+  @@index([fecha])
+}
+
+// ============================================
+// IOT - SENSORES Y LECTURAS
+// ============================================
+
+model Sensor {
+  id          String      @id @default(uuid())
+  parcelaId   String
+  parcela     Parcela     @relation(fields: [parcelaId], references: [id], onDelete: Cascade)
+  
+  tipo        SensorType
+  nombre      String?
+  codigo      String      @unique
+  ubicacion   String?
+  activo      Boolean     @default(true)
+  
+  // Configuración
+  intervaloLectura  Int   @default(300) // Segundos
+  umbralMinimo      Float?
+  umbralMaximo      Float?
+  
+  ultimaLectura     DateTime?
+  
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  
+  // Relaciones
+  lecturas    LecturaIoT[]
+  
+  @@index([parcelaId])
+  @@index([tipo])
+  @@index([codigo])
+}
+
+model LecturaIoT {
+  id          String    @id @default(uuid())
+  sensorId    String
+  sensor      Sensor    @relation(fields: [sensorId], references: [id], onDelete: Cascade)
+  
+  valor       Float
+  unidad      String
+  timestamp   DateTime  @default(now())
+  
+  // Metadata
+  bateria     Float?    // Porcentaje de batería del sensor
+  senal       Float?    // Calidad de señal
+  
+  @@index([sensorId])
+  @@index([timestamp])
+}
+
+enum SensorType {
+  TEMPERATURA_SUELO
+  HUMEDAD_SUELO
+  PH_SUELO
+  NUTRIENTES
+  TEMPERATURA_AMBIENTE
+  HUMEDAD_AMBIENTE
+  LLUVIA
+  VIENTO
+  RADIACION_SOLAR
+}
+
+// ============================================
+// ALERTAS
+// ============================================
+
+model Alerta {
+  id          String          @id @default(uuid())
+  userId      String
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parcelaId   String?
+  parcela     Parcela?        @relation(fields: [parcelaId], references: [id])
+  cultivoId   String?
+  cultivo     Cultivo?        @relation(fields: [cultivoId], references: [id])
+  
+  tipo        AlertType
+  prioridad   AlertPriority
+  titulo      String
+  mensaje     String
+  
+  leida       Boolean         @default(false)
+  fechaLeida  DateTime?
+  activa      Boolean         @default(true)
+  
+  // Acciones tomadas
+  accionTomada  String?
+  fechaAccion   DateTime?
+  
+  createdAt   DateTime        @default(now())
+  
+  @@index([userId])
+  @@index([tipo])
+  @@index([prioridad])
+  @@index([activa])
+}
+
+enum AlertType {
+  CLIMA
+  RIEGO
+  PLAGA
+  INVENTARIO
+  FINANZAS
+  COSECHA
+  SISTEMA
+  SEGURIDAD
+}
+
+enum AlertPriority {
+  BAJA
+  MEDIA
+  ALTA
+  CRITICA
+}
+
+// ============================================
+// TAREAS Y CALENDARIO
+// ============================================
+
+model Tarea {
+  id            String        @id @default(uuid())
+  userId        String
+  
+  titulo        String
+  descripcion   String?
+  fechaLimite   DateTime?
+  prioridad     AlertPriority @default(MEDIA)
+  completada    Boolean       @default(false)
+  fechaCompletada DateTime?
+  
+  // Recurrencia
+  recurrente    Boolean       @default(false)
+  frecuencia    String?       // DIARIO, SEMANAL, MENSUAL
+  
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  
+  @@index([userId])
+  @@index([fechaLimite])
+}
+
+// ============================================
+// AUDITORÍA Y SEGURIDAD
+// ============================================
+
+model AuditLog {
+  id          String    @id @default(uuid())
+  userId      String?
+  user        User?     @relation(fields: [userId], references: [id])
+  
+  event       String
+  resource    String?
+  resourceId  String?
+  action      String?
+  
+  oldValue    String?   // JSON stringified
+  newValue    String?   // JSON stringified
+  
+  ipAddress   String?
+  userAgent   String?
+  requestId   String?
+  metadata    String?   // JSON stringified
+  
+  createdAt   DateTime  @default(now())
+  
+  @@index([userId])
+  @@index([event])
+  @@index([createdAt])
+  @@index([resource])
+}
+
+// ============================================
+// CONFIGURACIÓN DEL SISTEMA
+// ============================================
+
+model ConfiguracionUsuario {
+  id              String    @id @default(uuid())
+  userId          String    @unique
+  
+  // Notificaciones
+  notifEmail      Boolean   @default(true)
+  notifSMS        Boolean   @default(false)
+  notifWhatsApp   Boolean   @default(false)
+  
+  // Preferencias
+  idioma          String    @default("es")
+  unidadArea      String    @default("ha")
+  unidadPeso      String    @default("qq")
+  moneda          String    @default("BOB")
+  
+  // Alertas
+  alertaHumedad   Float     @default(30)    // Porcentaje mínimo
+  alertaTemperatura Float   @default(-2)    // Grados mínimos (helada)
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  @@index([userId])
+}
+
+// ============================================
+// PRECIOS DE MERCADO (IA)
+// ============================================
+
+model PrecioMercado {
+  id          String    @id @default(uuid())
+  producto    String
+  precio      Float
+  unidad      String
+  mercado     String    // Ej: "Feria 16 de Julio", "Mercado Rodriguez"
+  ciudad      String
+  fecha       DateTime
+  
+  createdAt   DateTime  @default(now())
+  
+  @@index([producto])
+  @@index([mercado])
+  @@index([fecha])
+}

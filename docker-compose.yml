@@ -1,0 +1,85 @@
+services:
+  # ============================================
+  # BASE DE DATOS POSTGRESQL
+  # ============================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: agrobolivia-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: agrobolivia
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - agrobolivia-network
+
+  # ============================================
+  # BACKEND API
+  # ============================================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: agrobolivia-api
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/agrobolivia?schema=public
+      JWT_SECRET: ${JWT_SECRET:-super_secret_jwt_key_change_in_production}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-super_secret_refresh_key_change_in_production}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef}
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - agrobolivia-network
+    restart: unless-stopped
+
+  # ============================================
+  # FRONTEND REACT
+  # ============================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: agrobolivia-web
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+    networks:
+      - agrobolivia-network
+    restart: unless-stopped
+
+  # ============================================
+  # ADMINER (Gestor de BD - Solo desarrollo)
+  # ============================================
+  adminer:
+    image: adminer:latest
+    container_name: agrobolivia-adminer
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    networks:
+      - agrobolivia-network
+    profiles:
+      - dev
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  agrobolivia-network:
+    driver: bridge
