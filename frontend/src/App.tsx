@@ -7,6 +7,13 @@ import Dashboard from './pages/Dashboard';
 import Parcelas from './pages/Parcelas';
 import ParcelaDetalle from './pages/ParcelaDetalle';
 import Finanzas from './pages/Finanzas';
+import EstadoResultados from './pages/EstadoResultados';
+import FlujoCaja from './pages/FlujoCaja';
+import CuentasCobrarPagar from './pages/CuentasCobrarPagar';
+import CentroCostos from './pages/CentroCostos';
+import BalanceGeneral from './pages/BalanceGeneral';
+import Reportes from './pages/Reportes';
+import LibroDiario from './pages/LibroDiario';
 import Inventario from './pages/Inventario';
 import IoT from './pages/IoT';
 import Alertas from './pages/Alertas';
@@ -69,6 +76,13 @@ function App() {
         <Route path="parcelas" element={<Parcelas />} />
         <Route path="parcelas/:id" element={<ParcelaDetalle />} />
         <Route path="finanzas" element={<Finanzas />} />
+        <Route path="finanzas/estado-resultados" element={<EstadoResultados />} />
+        <Route path="finanzas/flujo-caja" element={<FlujoCaja />} />
+        <Route path="finanzas/cuentas" element={<CuentasCobrarPagar />} />
+        <Route path="finanzas/centro-costos" element={<CentroCostos />} />
+        <Route path="finanzas/balance" element={<BalanceGeneral />} />
+        <Route path="finanzas/libro-diario" element={<LibroDiario />} />
+        <Route path="finanzas/reportes" element={<Reportes />} />
         <Route path="inventario" element={<Inventario />} />
         <Route path="iot" element={<IoT />} />
         <Route path="alertas" element={<Alertas />} />
