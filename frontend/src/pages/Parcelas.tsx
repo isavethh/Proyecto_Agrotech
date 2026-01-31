@@ -13,11 +13,11 @@ interface Parcela {
   id: string;
   nombre: string;
   ubicacion: string;
-  areaHectareas: number;
+  tamanioHectareas: number;
   tipoSuelo?: string;
   latitud?: number;
   longitud?: number;
-  altitud?: number;
+  altitudMsnm?: number;
   activa: boolean;
   cultivos?: Cultivo[];
   sensores?: { id: string }[];
@@ -63,9 +63,9 @@ export default function Parcelas() {
           id: '1',
           nombre: 'Parcela Norte',
           ubicacion: 'Achocalla, La Paz',
-          areaHectareas: 1,
+          tamanioHectareas: 1,
           tipoSuelo: 'Franco arcilloso',
-          altitud: 3800,
+          altitudMsnm: 3800,
           activa: true,
           cultivos: [
             { id: '1', nombre: 'Papa', variedad: 'Huaycha', estado: 'CRECIMIENTO', fechaSiembra: '2024-01-15' },
@@ -75,9 +75,9 @@ export default function Parcelas() {
           id: '2',
           nombre: 'Parcela Sur',
           ubicacion: 'Achocalla, La Paz',
-          areaHectareas: 0.5,
+          tamanioHectareas: 0.5,
           tipoSuelo: 'Franco arenoso',
-          altitud: 3790,
+          altitudMsnm: 3790,
           activa: true,
           cultivos: [
             { id: '2', nombre: 'Haba', variedad: 'Criolla', estado: 'FLORACION', fechaSiembra: '2024-02-01' },
@@ -125,11 +125,11 @@ export default function Parcelas() {
       setFormData({
         nombre: parcela.nombre,
         ubicacion: parcela.ubicacion,
-        areaHectareas: parcela.areaHectareas.toString(),
+        areaHectareas: parcela.tamanioHectareas?.toString() || '',
         tipoSuelo: parcela.tipoSuelo || '',
         latitud: parcela.latitud?.toString() || '',
         longitud: parcela.longitud?.toString() || '',
-        altitud: parcela.altitud?.toString() || '',
+        altitud: parcela.altitudMsnm?.toString() || '',
       });
     } else {
       setSelectedParcela(null);
@@ -194,7 +194,7 @@ export default function Parcelas() {
         <div className="card bg-gradient-to-r from-blue-500 to-blue-600 text-white">
           <p className="text-sm opacity-90">Área Total</p>
           <p className="text-3xl font-bold">
-            {parcelas.reduce((sum, p) => sum + p.areaHectareas, 0).toFixed(2)} ha
+            {parcelas.reduce((sum, p) => sum + (p.tamanioHectareas || 0), 0).toFixed(2)} ha
           </p>
         </div>
         <div className="card bg-gradient-to-r from-green-500 to-green-600 text-white">
@@ -238,7 +238,7 @@ export default function Parcelas() {
             <div className="space-y-3">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-500">Área:</span>
-                <span className="font-medium">{parcela.areaHectareas} hectáreas</span>
+                <span className="font-medium">{parcela.tamanioHectareas || 0} hectáreas</span>
               </div>
               {parcela.tipoSuelo && (
                 <div className="flex justify-between text-sm">
@@ -246,10 +246,10 @@ export default function Parcelas() {
                   <span className="font-medium">{parcela.tipoSuelo}</span>
                 </div>
               )}
-              {parcela.altitud && (
+              {parcela.altitudMsnm && (
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Altitud:</span>
-                  <span className="font-medium">{parcela.altitud} msnm</span>
+                  <span className="font-medium">{parcela.altitudMsnm} msnm</span>
                 </div>
               )}
             </div>
