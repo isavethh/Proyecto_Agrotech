@@ -17,7 +17,6 @@ import {
   SparklesIcon,
   CalendarDaysIcon,
   ChartBarIcon,
-  CloudIcon,
 } from '@heroicons/react/24/outline';
 
 const navigation = [

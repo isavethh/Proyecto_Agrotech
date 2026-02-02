@@ -22,6 +22,7 @@ import Perfil from './pages/Perfil';
 import Recomendaciones from './pages/Recomendaciones';
 import CalendarioAgricola from './pages/CalendarioAgricola';
 import AnalisisRentabilidad from './pages/AnalisisRentabilidad';
+import HistorialCosechas from './pages/HistorialCosechas';
 
 // Componente para rutas protegidas
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -91,6 +92,7 @@ function App() {
         <Route path="recomendaciones" element={<Recomendaciones />} />
         <Route path="calendario" element={<CalendarioAgricola />} />
         <Route path="rentabilidad" element={<AnalisisRentabilidad />} />
+        <Route path="historial-cosechas" element={<HistorialCosechas />} />
         <Route path="seguridad" element={<Security />} />
         <Route path="perfil" element={<Perfil />} />
       </Route>

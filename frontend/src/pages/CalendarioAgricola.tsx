@@ -8,10 +8,8 @@ import {
   CalendarDaysIcon,
   SunIcon,
   CloudIcon,
-  BeakerIcon,
   CheckCircleIcon,
   ClockIcon,
-  ExclamationTriangleIcon,
 } from '@heroicons/react/24/outline';
 import toast from 'react-hot-toast';
 

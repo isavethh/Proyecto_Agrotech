@@ -17,7 +17,6 @@ import { Bar, Doughnut, Line } from 'react-chartjs-2';
 import {
   ArrowLeftIcon,
   ArrowTrendingUpIcon,
-  ArrowTrendingDownIcon,
   CurrencyDollarIcon,
   ChartBarIcon,
   ScaleIcon,

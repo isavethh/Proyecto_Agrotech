@@ -28,9 +28,6 @@ import {
   CalendarDaysIcon,
   ChartBarIcon,
   CloudIcon,
-  SunIcon,
-  BeakerIcon,
-  TruckIcon,
   ClockIcon,
 } from '@heroicons/react/24/outline';
 

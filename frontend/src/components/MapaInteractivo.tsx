@@ -31,8 +31,8 @@ interface MapaInteractivoProps {
 
 export default function MapaInteractivo({
   parcelas = [],
-  centroLat = -16.5,
-  centroLng = -68.15,
+  centroLat: _centroLat = -16.5,
+  centroLng: _centroLng = -68.15,
   zoom = 12,
   onParcelaClick,
   mostrarControles = true,
