@@ -15,12 +15,17 @@ import {
   ArrowRightOnRectangleIcon,
   ChevronDownIcon,
   SparklesIcon,
+  CalendarDaysIcon,
+  ChartBarIcon,
+  CloudIcon,
 } from '@heroicons/react/24/outline';
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: HomeIcon },
   { name: 'Parcelas', href: '/parcelas', icon: MapIcon },
+  { name: 'Calendario', href: '/calendario', icon: CalendarDaysIcon },
   { name: 'Finanzas', href: '/finanzas', icon: CurrencyDollarIcon },
+  { name: 'Rentabilidad', href: '/rentabilidad', icon: ChartBarIcon },
   { name: 'Inventario', href: '/inventario', icon: CubeIcon },
   { name: 'IoT Sensores', href: '/iot', icon: SignalIcon },
   { name: 'Alertas', href: '/alertas', icon: BellIcon },

@@ -15,6 +15,7 @@ import {
 import { Line, Bar } from 'react-chartjs-2';
 import api from '../services/api';
 import toast from 'react-hot-toast';
+import MapaInteractivo from '../components/MapaInteractivo';
 import {
   ArrowLeftIcon,
   MapPinIcon,
@@ -496,25 +497,35 @@ export default function ParcelaDetalle() {
         </div>
       )}
 
-      {/* Mapa placeholder */}
-      <div className="card">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-          <MapPinIcon className="w-5 h-5 text-blue-600" />
-          Ubicación
-        </h2>
-        <div className="bg-gradient-to-br from-green-100 to-blue-100 rounded-xl h-64 flex items-center justify-center relative overflow-hidden">
-          <div className="absolute inset-0 opacity-30">
-            <div className="absolute top-1/4 left-1/4 w-32 h-32 bg-green-400 rounded-full blur-3xl"></div>
-            <div className="absolute bottom-1/4 right-1/4 w-40 h-40 bg-blue-400 rounded-full blur-3xl"></div>
-          </div>
-          <div className="text-center z-10">
-            <MapPinIcon className="w-12 h-12 text-primary-600 mx-auto mb-2" />
-            <p className="font-semibold text-gray-700">
-              {parcela.latitud && parcela.longitud 
-                ? `${parcela.latitud.toFixed(4)}, ${parcela.longitud.toFixed(4)}`
-                : 'Coordenadas no disponibles'}
-            </p>
-            <p className="text-sm text-gray-500">{parcela.ubicacion}</p>
+      {/* Mapa interactivo */}
+      <div className="card p-0 overflow-hidden">
+        <div className="p-4 border-b">
+          <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+            <MapPinIcon className="w-5 h-5 text-blue-600" />
+            Ubicación de la Parcela
+          </h2>
+        </div>
+        <MapaInteractivo
+          altura="h-72"
+          parcelas={[{
+            id: parcela.id,
+            nombre: parcela.nombre,
+            latitud: parcela.latitud,
+            longitud: parcela.longitud,
+            tamanioHectareas: parcela.tamanioHectareas,
+            cultivo: parcela.cultivos?.[0]?.nombre,
+            estado: parcela.cultivos?.[0]?.estado,
+          }]}
+          centroLat={parcela.latitud}
+          centroLng={parcela.longitud}
+          zoom={14}
+        />
+        <div className="p-4 bg-gray-50 border-t">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-gray-600">Coordenadas:</span>
+            <span className="font-mono">
+              {parcela.latitud?.toFixed(6) || 'N/A'}, {parcela.longitud?.toFixed(6) || 'N/A'}
+            </span>
           </div>
         </div>
       </div>
