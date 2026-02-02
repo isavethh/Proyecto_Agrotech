@@ -20,6 +20,8 @@ import Alertas from './pages/Alertas';
 import Security from './pages/Security';
 import Perfil from './pages/Perfil';
 import Recomendaciones from './pages/Recomendaciones';
+import CalendarioAgricola from './pages/CalendarioAgricola';
+import AnalisisRentabilidad from './pages/AnalisisRentabilidad';
 
 // Componente para rutas protegidas
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -87,6 +89,8 @@ function App() {
         <Route path="iot" element={<IoT />} />
         <Route path="alertas" element={<Alertas />} />
         <Route path="recomendaciones" element={<Recomendaciones />} />
+        <Route path="calendario" element={<CalendarioAgricola />} />
+        <Route path="rentabilidad" element={<AnalisisRentabilidad />} />
         <Route path="seguridad" element={<Security />} />
         <Route path="perfil" element={<Perfil />} />
       </Route>
